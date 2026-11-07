@@ -21,14 +21,14 @@ jobs:
       - name: Verify Android project files
         shell: bash
         run: |
-          test -f main.py || { echo "::error::Missing main.py in repository root"; exit 1; }
-          test -f buildozer.spec || { echo "::error::Missing buildozer.spec in repository root"; exit 1; }
+          test -f Contador_Android_Project/main.py || { echo "::error::Missing main.py in Contador_Android_Project"; exit 1; }
+          test -f Contador_Android_Project/buildozer.spec || { echo "::error::Missing buildozer.spec in Contador_Android_Project"; exit 1; }
 
       - name: Build debug APK
         id: buildozer
         uses: ArtemSBulgakov/buildozer-action@v1
         with:
-          workdir: .
+          workdir: Contador_Android_Project
           buildozer_version: stable
           command: buildozer android debug
 
