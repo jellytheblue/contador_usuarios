@@ -1,0 +1,41 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build APK with Buildozer
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Verify Android project files
+        shell: bash
+        run: |
+          test -f main.py || { echo "::error::Missing main.py in repository root"; exit 1; }
+          test -f buildozer.spec || { echo "::error::Missing buildozer.spec in repository root"; exit 1; }
+
+      - name: Build debug APK
+        id: buildozer
+        uses: ArtemSBulgakov/buildozer-action@v1
+        with:
+          workdir: .
+          buildozer_version: stable
+          command: buildozer android debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: contador-usuarios-debug-apk
+          path: ${{ steps.buildozer.outputs.filename }}
+          if-no-files-found: error
+          retention-days: 14
