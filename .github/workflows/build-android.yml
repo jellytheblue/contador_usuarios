@@ -11,31 +11,50 @@ permissions:
 jobs:
   build:
     name: Build APK with Buildozer
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 90
 
     steps:
       - name: Check out source
         uses: actions/checkout@v4
 
-      - name: Verify Android project files
-        shell: bash
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install system dependencies
         run: |
-          test -f Contador_Android_Project/main.py || { echo "::error::Missing main.py in Contador_Android_Project"; exit 1; }
-          test -f Contador_Android_Project/buildozer.spec || { echo "::error::Missing buildozer.spec in Contador_Android_Project"; exit 1; }
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential git zip unzip \
+            openjdk-17-jdk \
+            python3-pip python3-venv \
+            autoconf libtool pkg-config \
+            zlib1g-dev libncurses5-dev libncursesw5-dev \
+            libtinfo5 cmake libffi-dev libssl-dev
+
+      - name: Install Buildozer
+        run: |
+          python -m venv .venv
+          . .venv/bin/activate
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install buildozer cython==0.29.33
+
+      - name: Verify Android project files
+        run: |
+          test -f Contador_Android_Project/main.py
+          test -f Contador_Android_Project/buildozer.spec
 
       - name: Build debug APK
-        id: buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
-        with:
-          workdir: Contador_Android_Project
-          buildozer_version: stable
-          command: buildozer android debug
+        working-directory: Contador_Android_Project
+        run: |
+          ../.venv/bin/buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: contador-usuarios-debug-apk
-          path: ${{ steps.buildozer.outputs.filename }}
+          path: Contador_Android_Project/bin/*.apk
           if-no-files-found: error
           retention-days: 14
